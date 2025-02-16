@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Exercises Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .exercise-container {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .exercise-input {
+            margin-bottom: 20px;
+        }
+
+        /* Styles for the login modal */
+        #loginModal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none; /* Class to hide elements */
+        }
+    </style>
+</head>
+<body>
+    <img src="Smartech Educatation Computer Centre.png" style="border-radius:5px;" height="100px" width="300PX">
+    <img src="Typing boy.png" style="border-radius:5px; float:right" class="fadeIn" height="100px" width="150PX">
+    <nav>
+        <ul>
+            <li><a href="Home.html">Home</a></li>
+            <li><a href="exercises.html">Exercises</a></li>
+            <li><a href="SpeedTest/index.html">Speed Test</a></li>
+        </ul>
+    </nav>
+    
+    <h1>Typing Exercises Manager</h1>
+    <p style="font-family:bookman old Style">Welcome to Typing Exercises Manager! 
+Enhance your typing skills with our interactive and feature-rich typing test platform. Our website offers a unique typing experience designed to improve speed, accuracy, and efficiency.</p>
+<pre style="font-family:bookman old Style">
+Key Features: 
+✅ Backspace Control 		– Users can practice with backspace disabled, encouraging accurate typing.
+✅ Text Highlighting 		– Enables better focus and interaction while typing.
+✅ Typing Speed Test 		– Measure your WPM (Words Per Minute) with real-time feedback.
+✅ Bilingual Practice 		– Supports English and Punjabi typing exercises.
+✅ Custom Exercises 		– Create and practice personalized exercises.
+✅ Progress Tracking 		– View detailed test results, including accuracy and mistakes.
+✅ User-Friendly Interface – Dark mode and responsive design for a seamless experience.
+
+Start practicing today and boost your typing efficiency like a pro! 
+</pre>
+    <button style="float:right;" onclick="document.getElementById('loginModal').style.display='flex'">Login</button>
+    
+    <button id="logoutButton" class="hidden" onclick="logout()">Logout</button>
+
+    <div class="exercise-container hidden" id="exerciseContainer">
+        <div class="exercise-input">
+            <input type="file" id="exerciseFile" accept=".txt">
+            <button onclick="loadExercisesFromFile()">Load Exercises from File</button>
+        </div>
+        <div class="exercise-input">
+            <input type="text" id="exerciseFileUrl" placeholder="Paste file URL here">
+            <button onclick="loadExercisesFromUrl()">Load Exercises from URL</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th width="50%">English Exercises</th>
+                    <th width="50%">Punjabi Exercises</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="exercise-input">
+                            <input type="text" id="exerciseTitleEnglish" placeholder="Exercise title">
+                            <textarea id="exerciseTextEnglish" rows="5" placeholder="Enter exercise text"></textarea>
+                            <button onclick="addExercise('English')">Add English Exercise</button>
+                            <div id="exerciseListEnglish"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="exercise-input">
+                            <input type="text" id="exerciseTitlePunjabi" placeholder="Exercise title">
+                            <textarea id="exerciseTextPunjabi" rows="5" placeholder="Enter exercise text"></textarea>
+                            <button onclick="addExercise('Punjabi')">Add Punjabi Exercise</button>
+                            <div id="exerciseListPunjabi"></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="loginModal">
+        <div class="modal-content">
+            <h2>Login</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="verifyCredentials()">Login</button>
+            <div id="loginMessage"></div>
+        </div>
+    </div>
+
+    <button id="deleteAllButton" class="hidden" onclick="deleteAllExercises()">Delete All Exercises</button>
+
+    <script>
+        // Initialize exercises with permanent exercises
+        let exercisesEnglish = JSON.parse(localStorage.getItem('exercisesEnglish')) || [];
+        let exercisesPunjabi = JSON.parse(localStorage.getItem('exercisesPunjabi')) || [];
+        
+        // Check login status from sessionStorage
+        let isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+
+        const correctUsername = "skraj"; // Replace with secure method
+        const correctPassword = "170195"; // Replace with secure method
+
+        // URL of the SampleTest.txt file
+        const sampleTestFileUrl = 'https://raw.githubusercontent.com/skrajb/website/f0ca2dcd63b616e97e96f7c1fc6a754e8befbfba/SampleTest.txt'; // Replace with the actual URL
+
+        function verifyCredentials() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === correctUsername && password === correctPassword) {
+                isLoggedIn = true; // Set login flag
+                sessionStorage.setItem('isLoggedIn', 'true'); // Store login status
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('loginMessage').innerText = "";
+                document.getElementById('exerciseContainer').classList.remove('hidden'); // Show exercise areas
+                document.getElementById('logoutButton').classList.remove('hidden'); // Show logout button
+                document.getElementById('deleteAllButton').classList.remove('hidden'); // Show delete button
+                
+                // Check if exercises already exist
+                if (exercisesEnglish.length === 0 && exercisesPunjabi.length === 0) {
+                    // Load exercises from SampleTest.txt
+                    extractExercisesFromFile(sampleTestFileUrl); // Load the file only if no exercises exist
+                }
+            } else {
+                document.getElementById('loginMessage').innerText = "Invalid username or password.";
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false; // Reset login flag
+            sessionStorage.removeItem('isLoggedIn'); // Remove login status
+            document.getElementById('exerciseContainer').classList.add('hidden'); // Hide exercise areas
+            document.getElementById('logoutButton').classList.add('hidden'); // Hide logout button
+            document.getElementById('deleteAllButton').classList.add('hidden'); // Hide delete button
+        }
+
+        function addExercise(language) {
+            if (!isLoggedIn) {
+                document.getElementById('loginModal').style.display = 'flex';
+                return;
+            }
+            const title = language === 'English' ? document.getElementById('exerciseTitleEnglish').value.trim() : document.getElementById('exerciseTitlePunjabi').value.trim();
+            const text = language === 'English' ? document.getElementById('exerciseTextEnglish').value.trim() : document.getElementById('exerciseTextPunjabi').value.trim();
+            
+            if (!title || !text) {
+                alert('Both title and text are required!');
+                return;
+            }
+
+            if (language === 'English') {
+                exercisesEnglish.push({ title, text });
+                localStorage.setItem('exercisesEnglish', JSON.stringify(exercisesEnglish));
+                renderExercises('English');
+            } else {
+                exercisesPunjabi.push({ title, text });
+                localStorage.setItem('exercisesPunjabi', JSON.stringify(exercisesPunjabi));
+                renderExercises('Punjabi');
+            }
+        }
+
+        function renderExercises(language) {
+            const container = language === 'English' ? document.getElementById('exerciseListEnglish') : document.getElementById('exerciseListPunjabi');
+            const exercises = language === 'English' ? exercisesEnglish : exercisesPunjabi;
+
+            container.innerHTML = exercises.map((ex, index) => `
+                <div class="exercise-box">
+                    <h3>${index + 1}. ${ex.title}</h3>
+                    <button onclick="toggleExercise(${index}, '${language}')">Show/Hide Content</button>
+                    <div id="exerciseContent${language}${index}" style="display: none;">
+                        <p>${ex.text}</p>
+                        <button onclick="startTypingTest('${encodeURIComponent(ex.text)}', '${language}')">Start Test</button>
+                        <button onclick="deleteExercise(${index}, '${language}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleExercise(index, language) {
+            const contentDiv = document.getElementById(`exerciseContent${language}${index}`);
+            contentDiv.style.display = contentDiv.style.display === "none" ? "block" : "none";
+        }
+
+        function startTypingTest(exercise, language) {
+            const encodedExercise = encodeURIComponent(exercise);
+            window.location.href = `index.html?exercise=${encodedExercise}&language=${language}`; // Redirect to typing test
+        }
+
+        function deleteExercise(index, language) {
+            if (!isLoggedIn) {
+                document.getElementById('loginModal').style.display = 'flex';
+                return;
+            }
+            if (language === 'English') {
+                exercisesEnglish.splice(index, 1);
+                localStorage.setItem('exercisesEnglish', JSON.stringify(exercisesEnglish));
+                renderExercises('English');
+            } else {
+                exercisesPunjabi.splice(index, 1);
+                localStorage.setItem('exercisesPunjabi', JSON.stringify(exercisesPunjabi));
+                renderExercises('Punjabi');
+            }
+        }
+
+        // Load exercises from uploaded file
+        function loadExercisesFromFile() {
+            const fileInput = document.getElementById('exerciseFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = event.target.result;
+                const lines = data.split('\n');
+                let currentLanguage = null;
+
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (line.toLowerCase() === 'english exercises:') {
+                        currentLanguage = 'English';
+                    } else if (line.toLowerCase() === 'punjabi exercises:') {
+                        currentLanguage = 'Punjabi';
+                    } else if (line) {
+                        const [title, ...exerciseText] = line.split(':');
+                        const text = exerciseText.join(':').trim();
+                        if (currentLanguage === 'English') {
+                            exercisesEnglish.push({ title: title.trim(), text });
+                        } else if (currentLanguage === 'Punjabi') {
+                            exercisesPunjabi.push({ title: title.trim(), text });
+                        }
+                    }
+                });
+
+                // Save to local storage and render exercises
+                localStorage.setItem('exercisesEnglish', JSON.stringify(exercisesEnglish));
+                localStorage.setItem('exercisesPunjabi', JSON.stringify(exercisesPunjabi));
+                renderExercises('English');
+                renderExercises('Punjabi');
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Method to extract exercises from a text file
+        function extractExercisesFromFile(fileUrl) {
+            console.log("Fetching exercises from:", fileUrl); // Debug log
+            fetch(fileUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log("File data loaded successfully."); // Debug log
+                    const lines = data.split('\n');
+                    let currentLanguage = null;
+
+                    lines.forEach(line => {
+                        line = line.trim();
+                        if (line.toLowerCase() === 'english exercises:') {
+                            currentLanguage = 'English';
+                        } else if (line.toLowerCase() === 'punjabi exercises:') {
+                            currentLanguage = 'Punjabi';
+                        } else if (line) {
+                            const [title, ...exerciseText] = line.split(':');
+                            const text = exerciseText.join(':').trim();
+                            if (currentLanguage === 'English') {
+                                exercisesEnglish.push({ title: title.trim(), text });
+                            } else if (currentLanguage === 'Punjabi') {
+                                exercisesPunjabi.push({ title: title.trim(), text });
+                            }
+                        }
+                    });
+
+                    // Save to local storage and render exercises
+                    localStorage.setItem('exercisesEnglish', JSON.stringify(exercisesEnglish));
+                    localStorage.setItem('exercisesPunjabi', JSON.stringify(exercisesPunjabi));
+                    renderExercises('English');
+                    renderExercises('Punjabi');
+                })
+                .catch(error => {
+                    console.error('Error fetching the file:', error);
+                });
+        }
+
+        // Function to delete all exercises
+        function deleteAllExercises() {
+            if (!isLoggedIn) {
+                document.getElementById('loginModal').style.display = 'flex';
+                return;
+            }
+            exercisesEnglish = [];
+            exercisesPunjabi = [];
+            localStorage.removeItem('exercisesEnglish');
+            localStorage.removeItem('exercisesPunjabi');
+            renderExercises('English');
+            renderExercises('Punjabi');
+            alert('All exercises have been deleted. You can now reload SampleTest.txt.');
+        }
+
+        // Load exercises from URL
+        function loadExercisesFromUrl() {
+            const url = document.getElementById('exerciseFileUrl').value.trim();
+            if (!url) {
+                alert('Please enter a valid URL.');
+                return;
+            }
+            extractExercisesFromFile(url);
+        }
+
+        // Call the function on page load
+        window.onload = function() {
+            // Check if user is logged in
+            if (isLoggedIn) {
+                document.getElementById('exerciseContainer').classList.remove('hidden'); // Show exercise areas
+                document.getElementById('logoutButton').classList.remove('hidden'); // Show logout button
+                document.getElementById('deleteAllButton').classList.remove('hidden'); // Show delete button
+                
+                // Check if exercises already exist
+                if (exercisesEnglish.length === 0 && exercisesPunjabi.length === 0) {
+                    // Load exercises from SampleTest.txt
+                    extractExercisesFromFile(sampleTestFileUrl); // Load the file only if no exercises exist
+                }
+            }
+            // Initial render
+            renderExercises('English');
+            renderExercises('Punjabi');
+        };
+
+        // Disable specific keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // Disable Ctrl + U
+            if (event.ctrlKey && event.key === 'u') {
+                event.preventDefault();
+            }
+
+            // Disable Ctrl + C
+            if (event.ctrlKey && event.key === 'c') {
+                event.preventDefault();
+            }
+
+            // Disable Ctrl + P
+            if (event.ctrlKey && event.key === 'p') {
+                event.preventDefault();
+            }
+        });
+
+        // Disable right-click and specific keyboard shortcuts
+        document.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+        });
+    </script>
+</body>
+</html>
