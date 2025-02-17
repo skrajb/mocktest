@@ -211,7 +211,7 @@
             resultsHTML += `</table>`;
             document.getElementById('results').innerHTML = resultsHTML;
 
-            if (((((correctChars + wrongChars) / 5) / 10).toFixed(1)) >= 1 && accuracy >= 92 && wrongCount <= 24) {
+            if (((((correctChars + wrongChars) / 5) / 10).toFixed(1)) >= 30 && accuracy >= 92 && wrongCount <= 24) {
                 document.getElementById('congratulations').innerHTML = `<h2>Congratulations! You passed! 🎉</h2>`;
             } else {
                 document.getElementById('congratulations').innerHTML = "<h3>Sorry, you failed. Try again! 😞</h3>";
